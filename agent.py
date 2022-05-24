@@ -18,8 +18,8 @@ class Policy(torch.nn.Module):
         self.fc1_actor = torch.nn.Linear(state_space, self.hidden)
         self.fc2_actor = torch.nn.Linear(self.hidden, self.hidden)
         self.fc3_actor_mean = torch.nn.Linear(self.hidden, action_space)
-        
-        # Learned standard deviation for exploration at training time 
+
+        # Learned standard deviation for exploration at training time
         self.sigma_activation = F.softplus
         init_sigma = 0.5
         self.sigma = torch.nn.Parameter(torch.zeros(self.action_space)+init_sigma)
@@ -56,7 +56,7 @@ class Policy(torch.nn.Module):
         """
         # TODO 2.2.b: forward in the critic network
 
-        
+
         return normal_dist
 
 
@@ -80,12 +80,17 @@ class Agent(object):
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
         done = torch.Tensor(self.done).to(self.train_device)
 
-        #
-        # TODO 2.2.a:
-        #             - compute discounted returns
-        #             - compute policy gradient loss function given actions and returns
-        #             - compute gradients and step the optimizer
-        #
+        G = torch.Tensor([np.sum((rewards.numpy())[i:]*(self.gamma**np.array(range(0, len(rewards)-i)))) for i in range(len(rewards))]).to(self.train_device) #discounted returns
+        G=(G-G.mean())/G.std() #fixed baseline
+
+        loss = torch.sum(-action_log_probs * G) # policy gradient loss function given actions and returns
+                                        # "-" because it was built to work with gradient descent, but we are using gradient ascent
+        # update policy weights
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+                                        # gradients computation and step the optimizer
+
 
 
         #
@@ -96,7 +101,7 @@ class Agent(object):
         #             - compute gradients and step the optimizer
         #
 
-        return        
+        return
 
     def get_action(self, state, evaluation=False):
         x = torch.from_numpy(state).float().to(self.train_device)
@@ -121,3 +126,9 @@ class Agent(object):
         self.rewards.append(torch.Tensor([reward]))
         self.done.append(done)
 
+    def reset_outcome(self):
+        self.states = []
+        self.next_states = []
+        self.action_log_probs = []
+        self.rewards = []
+        self.done = []
