@@ -1,4 +1,5 @@
 import torch
+import torch.nn
 import torch.nn.functional as F
 from torch.distributions import Normal
 import numpy as np
@@ -86,55 +87,27 @@ class Agent(object):
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
         done = torch.Tensor(self.done).to(self.train_device)
 
-#        G = torch.Tensor([np.sum((rewards.numpy())[i:]*(self.gamma**np.array(range(0, len(rewards)-i)))) for i in range(len(rewards))]).to(self.train_device) #discounted returns
-#        G=(G-G.mean())/G.std() #fixed baseline
-#
-#        loss = torch.sum(-action_log_probs * G) # policy gradient loss function given actions and returns
-                                        # "-" because it was built to work with gradient descent, but we are using gradient ascent
-#        # update policy weights
-#        self.optimizer.zero_grad()
-#        loss.backward()
-#        self.optimizer.step()
-#                                        # gradients computation and step the optimizer
+        state_values_det = state_values.detach()
+        G=[]                         
+        for r in range(0, len(rewards)):
+            if r != (len(rewards)-1):
+                G.append(rewards[r] + self.gamma * state_values_det[r+1])
+            else:
+                G.append(rewards[r])
+        G = torch.Tensor(G).to(self.train_device) # boostrapped discounted return estimates
+        advantage = G - state_values_det # advantage terms
+        actor_loss = torch.sum(-action_log_probs * advantage) # actor loss function
+        
+        G_det = G.detach()
+        critic_loss_fn = torch.nn.HuberLoss()
+        critic_loss = loss_fn(state_values, G_det) # critic loss function
+        
+        ac_loss = actor_loss + critic_loss
 
-        R = 0
-        value_losses = [] # list to save critic (value) loss
-        returns = [] # list to save the true values
-
-        # calculate the true value using rewards returned from the environment
-        for r in rewards.numpy()[::-1]:
-            # calculate the discounted value
-            R = r + self.gamma * R
-            returns.insert(0, R)
-
-        returns = torch.Tensor(returns)
-        returns = (returns - returns.mean()) / (returns.std()) ## + eps)
-
-        advantage = returns - state_values
-        policy_losses = -action_log_probs * advantage # calculate actor (policy) loss
-
-        for value, R in zip(self.state_values, returns):
-            # calculate critic (value) loss using L1 smooth loss
-            value_losses.append(F.smooth_l1_loss(value, torch.tensor([R])))
-
-
-        # reset gradients
         self.optimizer.zero_grad()
-
-        # sum up all the values of policy_losses and value_losses
-        loss = policy_losses.sum() + torch.stack(value_losses).sum()
-
-        # perform backprop
-        loss.backward()
+        ac_loss.backward()
         self.optimizer.step()
-
-        #
-        # TODO 2.2.b:
-        #             - compute boostrapped discounted return estimates
-        #             - compute advantage terms
-        #             - compute actor loss and critic loss
-        #             - compute gradients and step the optimizer
-        #
+                                    # gradients computation and step the optimizer
 
         return
 
