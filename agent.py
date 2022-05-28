@@ -117,7 +117,7 @@ class Agent(object):
         normal_dist, state_value = self.policy(x)
 
         if evaluation:  # Return mean
-            return normal_dist.mean, None, value
+            return normal_dist.mean, None
 
         else:   # Sample from the distribution
             action = normal_dist.sample()
