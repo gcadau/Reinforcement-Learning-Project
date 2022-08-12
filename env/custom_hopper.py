@@ -10,6 +10,8 @@ from gym import utils
 from .mujoco_env import MujocoEnv
 from scipy.stats import truncnorm
 
+#pulire: * e resto
+
 class CustomHopper(MujocoEnv, utils.EzPickle):
     def __init__(self, domain=None):
         MujocoEnv.__init__(self, 4)
@@ -21,21 +23,49 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
             self.sim.model.body_mass[1] -= 1.0
 
 
-    def set_random_parameters(self):
+    def set_random_parameters(self, phi):
         """Set random masses
-        TODO
         """
-        self.set_parameters(*self.sample_parameters())
+        self.set_parameters(*self.sample_parameters(phi))
 
-    def sample_parameters(self):
+    def set_random_parametersBySamples(self, v2, v3, v4):
+        """Set random masses
+        """
+        self.set_parameters(*self.set_samples(v2, v3, v4))
+
+    def sample_parameters(self, phi):
+        """Sample masses from a normal distribution
+        """
+        #distribution
+        #numpy array parameters
+
+        self.sim.model.body_mass[2] = np.random.normal(phi[0][0],phi[0][1],1).astype(float) #thight
+        self.sim.model.body_mass[3] = np.random.normal(phi[1][0],phi[1][1],1).astype(float) #leg
+        self.sim.model.body_mass[4] = np.random.normal(phi[2][0],phi[2][1],1).astype(float) #foot
+
+        return np.copy(self.sim.model.body_mass[1:])
+
+    def set_samples(self, v2, v3, v4):
         """Sample masses according to a domain randomization distribution
         TODO
         """
-        return
+        #distribution
+        #numpy array parameters
+
+        self.sim.model.body_mass[2] = v2 #thight
+        self.sim.model.body_mass[3] = v3 #leg
+        self.sim.model.body_mass[4] = v4 #foot
+
+        return np.copy(self.sim.model.body_mass[1:])
 
     def get_parameters(self):
         """Get value of mass for each link"""
         masses = np.array( self.sim.model.body_mass[1:] )
+        return masses
+
+    def get_parametersToBeRandomized(self):
+        """Get value of mass for each link"""
+        masses = np.array( self.sim.model.body_mass[2:] )
         return masses
 
     def set_parameters(self, *task):
@@ -133,4 +163,3 @@ gym.envs.register(
         max_episode_steps=500,
         kwargs={"domain": "target"}
 )
-
