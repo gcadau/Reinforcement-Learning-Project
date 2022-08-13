@@ -38,6 +38,7 @@ class SimOpt(object):
         env_target = gym.make('CustomHopper-target-v0')
         traj_obs = []
         obs = env_target.reset()
+        traj_obs.append(obs)
         train_reward = 0
         done = False
         while not done:
@@ -166,6 +167,7 @@ class SimOpt(object):
         print(env.get_parameters())
         traj_obs = []
         obs = env.reset()
+        traj_obs.append(obs)
         train_reward = 0
         done = False
         while not done:
