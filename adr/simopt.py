@@ -18,62 +18,74 @@ class SimOpt(object):
 
         return
 
-    def distribution_optimization(self, training_algorithm, initPhi, normalize, logspace, budget):
+    def distribution_optimization(self, training_algorithm, initPhi, normalize, logspace, budget, n_iterations):
 
         env_source = gym.make('CustomHopper-source-v0')
-        env_source.reset()
-
         self.n_paramsToBeRandomized = len(env_source.get_parametersToBeRandomized())
+        env_source.close()
         phi0 = self.__set_initialPhi(initPhi)
 
-        model = self.__get_model(training_algorithm, env_source)
-        for i in range(10): #####
-            env_source.set_random_parameters(phi0)
-            print(env_source.get_parameters(), 'for:' , i)
-            model.learn(total_timesteps=10000)
-        model.save("model_ppo.mdl")
-        env_source.close()
-
-        #Collect 1 rollout in real word
-        env_target = gym.make('CustomHopper-target-v0')
-        traj_obs = []
-        obs = env_target.reset()
-        traj_obs.append(obs)
-        train_reward = 0
-        done = False
-        while not done:
-            action, _states = model.predict(obs, deterministic=True)
-            obs, reward, done, info = env_target.step(action)
-            traj_obs.append(obs)
-            train_reward += reward
-        #print(train_reward)
-        tau_real = np.array(traj_obs)
-        env_target.close()
-
-        searchSpace = []
         self.__set_phiBounds()
-        for i in range(self.n_paramsToBeRandomized):
-            if normalize:
-                pass # TODO:
-                if logspace:
-                    pass # TODO:
-                else:
-                    pass # TODO:
-            else:
-                mean = ng.p.Scalar(init=phi0[i][0]).set_bounds(lower=self.bounds[i][0][0], upper=self.bounds[i][0][1])
-                standard_deviation = ng.p.Scalar(init=phi0[i][1]).set_bounds(lower=self.bounds[i][1][0], upper=self.bounds[i][1][1])
-            searchSpace.append(mean)
-            searchSpace.append(standard_deviation)
         self.__set_searchSpace_bounds()
 
-        params = ng.p.Tuple(*searchSpace)
-        instrumentation = ng.p.Instrumentation(params=params, normalize=normalize, model=model, tau_real=tau_real)
-        cmaES_optimizer = ng.optimizers.CMA(parametrization=instrumentation, budget=budget)
-        recommendation = cmaES_optimizer.minimize(self.__objective_function)
 
-        #get __objective_function value, recommended ## TODO: if normalize
-        #print(recommendation)
-        print(recommendation.value[1]['params'], self.__objective_function(**recommendation.kwargs))
+        phi = phi0
+        for i in range(n_iterations):
+            env_source = gym.make('CustomHopper-source-v0')
+            env_source.reset()
+            model = self.__get_model(training_algorithm, env_source)
+            for i in range(100): #####
+                env_source.set_random_parameters(phi)
+                print(env_source.get_parameters(), 'for:' , i)
+                model.learn(total_timesteps=10000)
+            model.save("model_ppo.mdl")
+            env_source.close()
+
+            #Collect 1 rollout in real word
+            env_target = gym.make('CustomHopper-target-v0')
+            traj_obs = []
+            obs = env_target.reset()
+            traj_obs.append(obs)
+            train_reward = 0
+            done = False
+            while not done:
+                action, _states = model.predict(obs, deterministic=True)
+                obs, reward, done, info = env_target.step(action)
+                traj_obs.append(obs)
+                train_reward += reward
+            #print(train_reward)
+            tau_real = np.array(traj_obs)
+            env_target.close()
+
+            searchSpace = []
+            for i in range(self.n_paramsToBeRandomized):
+                if normalize:
+                    pass # TODO:
+                    if logspace:
+                        pass # TODO:
+                    else:
+                        pass # TODO:
+                else:
+                    mean = ng.p.Scalar(init=phi[i][0]).set_bounds(lower=self.bounds[i][0][0], upper=self.bounds[i][0][1])
+                    standard_deviation = ng.p.Scalar(init=phi[i][1]).set_bounds(lower=self.bounds[i][1][0], upper=self.bounds[i][1][1])
+                searchSpace.append(mean)
+                searchSpace.append(standard_deviation)
+
+            params = ng.p.Tuple(*searchSpace)
+            instrumentation = ng.p.Instrumentation(params=params, normalize=normalize, model=model, tau_real=tau_real)
+            cmaES_optimizer = ng.optimizers.CMA(parametrization=instrumentation, budget=budget)
+            recommendation = cmaES_optimizer.minimize(self.__objective_function)
+
+            #get __objective_function value, recommended ## TODO: if normalize
+            #print(recommendation)
+            print(recommendation.value[1]['params'], self.__objective_function(**recommendation.kwargs))
+
+            phi_optim = recommendation.value[1]['params']
+            phi = []
+            for i in range(int(len(phi_optim)/2)):
+                mean = phi_optim[i*2]
+                standard_deviation = phi_optim[i*2+1]
+                phi.append((mean, standard_deviation))
 
 
 
