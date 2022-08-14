@@ -131,6 +131,10 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         self.set_sim_state(mjstate)
 
 
+    def get_mujoco_current_state(self):
+        return self._get_obs()
+
+
     def set_sim_state(self, mjstate):
         """Set internal mujoco state"""
         return self.sim.set_state(mjstate)
