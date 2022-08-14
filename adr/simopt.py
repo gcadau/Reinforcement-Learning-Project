@@ -18,7 +18,7 @@ class SimOpt(object):
 
         return
 
-    def distribution_optimization(self, training_algorithm, initPhi, normalize, logspace, budget, n_iterations):
+    def distribution_optimization(self, training_algorithm, initPhi, normalize, logspace, budget, n_iterations, T_first):
 
         env_source = gym.make('CustomHopper-source-v0')
         self.n_paramsToBeRandomized = len(env_source.get_parametersToBeRandomized())
@@ -72,7 +72,7 @@ class SimOpt(object):
                 searchSpace.append(standard_deviation)
 
             params = ng.p.Tuple(*searchSpace)
-            instrumentation = ng.p.Instrumentation(params=params, normalize=normalize, model=model, tau_real=tau_real)
+            instrumentation = ng.p.Instrumentation(params=params, normalize=normalize, model=model, tau_real=tau_real, T_first=T_first)
             cmaES_optimizer = ng.optimizers.CMA(parametrization=instrumentation, budget=budget)
             recommendation = cmaES_optimizer.minimize(self.__objective_function)
 
@@ -138,15 +138,43 @@ class SimOpt(object):
             raise NotImplementedError('Training algorithm not found')
         return model
 
-    def __compute_discrepancy(self, tau_real, tau_sim):
+    def __compute_discrepancy(self, tau_real, tau_sim, T_first):
+        error_msg = ''
+        obj = None
+
         obs_dim = tau_sim.shape[1]
         horizon_diff = tau_sim.shape[0]-tau_real.shape[0]
-        if horizon_diff!=0:
-            queue = np.zeros((abs(horizon_diff), obs_dim))
-        if horizon_diff>0:
-            tau_real = np.concatenate((tau_real, queue))
-        if horizon_diff<0:
-            tau_sim = np.concatenate((tau_sim, queue))
+        if T_first=='max':
+            if horizon_diff!=0:
+                queue = np.zeros((abs(horizon_diff), obs_dim))
+            if horizon_diff>0:
+                tau_real = np.concatenate((tau_real, queue))
+            if horizon_diff<0:
+                tau_sim = np.concatenate((tau_sim, queue))
+            obj = 0
+        if T_first=='min':
+            if horizon_diff>0:
+                tau_sim = tau_sim[:tau_real.shape[0]]
+            if horizon_diff<0:
+                tau_real = tau_real[:tau_sim.shape[0]]
+            obj = 0
+        if T_first.split(":")[0]=='fixed':
+            try:
+                T_first_value = T_first.split(":")[1]
+                try:
+                    T_first_value = int(T_first.split(":")[1])
+                    if (T_first_value>tau_real.shape[0]) | (T_first_value>tau_sim.shape[0]):
+                        error_msg = ' (T_first_value not compatible)'
+                    else:
+                        tau_sim = tau_sim[:T_first_value]
+                        tau_real = tau_real[:T_first_value]
+                        obj = 0
+                except ValueError:
+                    error_msg = ' (Incorrect sintax)'
+            except IndexError:
+                error_msg = ' (Incorrect sintax)'
+        if obj is None:
+            raise NotImplementedError('T_first value not found' + error_msg)
         diff = tau_sim - tau_real
         dimensions_ImportanceWeights = np.ones((obs_dim,))
         diff = dimensions_ImportanceWeights*diff
@@ -160,7 +188,7 @@ class SimOpt(object):
         #print(obj)
         return obj
 
-    def __objective_function(self, params, normalize, model, tau_real):
+    def __objective_function(self, params, normalize, model, tau_real, T_first):
         if normalize:
             pass# TODO: denormalizeBounds
 
@@ -192,5 +220,5 @@ class SimOpt(object):
         tau_sim = np.array(traj_obs)
         env.close()
 
-        disc = self.__compute_discrepancy(tau_real, tau_sim)
+        disc = self.__compute_discrepancy(tau_real, tau_sim, T_first)
         return disc
