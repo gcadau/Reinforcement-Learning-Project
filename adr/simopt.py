@@ -45,6 +45,7 @@ class SimOpt(object):
             env_target = gym.make('CustomHopper-target-v0')
             traj_obs = []
             obs = env_target.reset()
+            self.starting_state = obs
             traj_obs.append(obs)
             train_reward = 0
             done = False
@@ -206,7 +207,9 @@ class SimOpt(object):
         env.set_random_parametersBySamples(samples[0], samples[1], samples[2])
         print(env.get_parameters())
         traj_obs = []
-        obs = env.reset()
+        env.reset()
+        env.set_mujoco_state(self.starting_state)
+        obs = env.get_mujoco_currentState()
         traj_obs.append(obs)
         train_reward = 0
         done = False
