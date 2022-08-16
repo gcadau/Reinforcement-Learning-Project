@@ -277,7 +277,7 @@ class SimOpt(object):
         factor = normal_length/original_length
         original_offset = math.log(value)-math.log(original_low)
         normalized_value = (original_offset)*factor+normal_low
-        return normalized_value_log
+        return normalized_value
 
     def __denormalize_value_log(self, normalized_value, original_low, original_upper, normal_low, normal_upper):
         # it's the inverse function of '__normalize_value_log', after applying properties of logarithms
