@@ -58,14 +58,15 @@ class SimOpt(object):
             tau_real = np.array(traj_obs)
             env_target.close()
 
+            self.__set_length_normalized_space()
             searchSpace = []
             for i in range(self.n_paramsToBeRandomized):
                 if normalize:
-                    pass # TODO:
+                    mean = ng.p.Scalar(init=self.__normalize_value(phi[i][0], self.bounds[i][0][0], self.bounds[i][0][1], 0, self.length_normalized_space)).set_bounds(lower=0, upper=self.length_normalized_space)
                     if logspace:
-                        pass # TODO:
+                        standard_deviation = ng.p.Scalar(init=self.__normalize_value_log(phi[i][1], self.bounds[i][1][0], self.bounds[i][1][1], 0, self.length_normalized_space)).set_bounds(lower=0, upper=self.length_normalized_space)
                     else:
-                        pass # TODO:
+                        standard_deviation = ng.p.Scalar(init=self.__normalize_value(phi[i][1], self.bounds[i][1][0], self.bounds[i][1][1], 0, self.length_normalized_space)).set_bounds(lower=0, upper=self.length_normalized_space)
                 else:
                     mean = ng.p.Scalar(init=phi[i][0]).set_bounds(lower=self.bounds[i][0][0], upper=self.bounds[i][0][1])
                     standard_deviation = ng.p.Scalar(init=phi[i][1]).set_bounds(lower=self.bounds[i][1][0], upper=self.bounds[i][1][1])
@@ -73,15 +74,29 @@ class SimOpt(object):
                 searchSpace.append(standard_deviation)
 
             params = ng.p.Tuple(*searchSpace)
-            instrumentation = ng.p.Instrumentation(params=params, normalize=normalize, model=model, tau_real=tau_real, T_first=T_first)
+            instrumentation = ng.p.Instrumentation(params=params, normalize=normalize, logspace=logspace, model=model, tau_real=tau_real, T_first=T_first)
             cmaES_optimizer = ng.optimizers.CMA(parametrization=instrumentation, budget=budget)
             recommendation = cmaES_optimizer.minimize(self.__objective_function)
 
             #get __objective_function value, recommended ## TODO: if normalize
             #print(recommendation)
-            print(recommendation.value[1]['params'], self.__objective_function(**recommendation.kwargs))
+            rec = []
+            if normalize:
+                for i in range(int(len(recommendation.value[1]['params'])/2)):
+                    mean = recommendation.value[1]['params'][i*2]
+                    standard_deviation = recommendation.value[1]['params'][i*2+1]
+                    mean = self.__denormalize_value(mean, self.bounds[i][0][0], self.bounds[i][0][1], 0, self.length_normalized_space)
+                    if logspace:
+                        standard_deviation = self.__denormalize_value_log(standard_deviation, self.bounds[i][1][0], self.bounds[i][1][1], 0, self.length_normalized_space)
+                    else:
+                        standard_deviation = self.__denormalize_value(standard_deviation, self.bounds[i][1][0], self.bounds[i][1][1], 0, self.length_normalized_space)
+                    rec.append(mean)
+                    rec.append(standard_deviation)
+            else:
+                rec = recommendation.value[1]['params']
+            print(rec, self.__objective_function(**recommendation.kwargs))
 
-            phi_optim = recommendation.value[1]['params']
+            phi_optim = rec
             phi = []
             for i in range(int(len(phi_optim)/2)):
                 mean = phi_optim[i*2]
@@ -128,6 +143,9 @@ class SimOpt(object):
             lower = 0.001
             upper = 12
             self.searchSpace_bounds.append((lower, upper))
+
+    def __set_length_normalized_space(self):
+        self.length_normalized_space = 4
 
     def __get_model(self, algorithm, env):
         model = None
@@ -189,9 +207,20 @@ class SimOpt(object):
         #print(obj)
         return obj
 
-    def __objective_function(self, params, normalize, model, tau_real, T_first):
+    def __objective_function(self, params, normalize, logspace, model, tau_real, T_first):
         if normalize:
-            pass# TODO: denormalizeBounds
+            den_params = []
+            for i in range(int(len(params)/2)):
+                mean = params[i*2]
+                standard_deviation = params[i*2+1]
+                mean = self.__denormalize_value(mean, self.bounds[i][0][0], self.bounds[i][0][1], 0, self.length_normalized_space)
+                if logspace:
+                    standard_deviation = self.__denormalize_value_log(standard_deviation, self.bounds[i][1][0], self.bounds[i][1][1], 0, self.length_normalized_space)
+                else:
+                    standard_deviation = self.__denormalize_value(standard_deviation, self.bounds[i][1][0], self.bounds[i][1][1], 0, self.length_normalized_space)
+                den_params.append(mean)
+                den_params.append(standard_deviation)
+            params = den_params
 
         samples = []
         for i in range(int(len(params)/2)):
@@ -209,7 +238,7 @@ class SimOpt(object):
         traj_obs = []
         env.reset()
         env.set_mujoco_state(self.starting_state)
-        obs = env.get_mujoco_currentState()
+        obs = env.get_mujoco_current_state()
         traj_obs.append(obs)
         train_reward = 0
         done = False
@@ -225,3 +254,36 @@ class SimOpt(object):
 
         disc = self.__compute_discrepancy(tau_real, tau_sim, T_first)
         return disc
+
+    def __normalize_value(self, value, original_low, original_upper, normal_low, normal_upper):
+        original_length = original_upper-original_low
+        normal_length = normal_upper-normal_low
+        factor = normal_length/original_length
+        original_offset = value-original_low
+        normalized_value = (original_offset)*factor+normal_low
+        return normalized_value
+
+    def __denormalize_value(self, normalized_value, original_low, original_upper, normal_low, normal_upper):
+        original_length = original_upper-original_low
+        normal_length = normal_upper-normal_low
+        factor = original_length/normal_length
+        normal_offset = normalized_value-normal_low
+        value = (normal_offset)*factor+original_low
+        return value
+
+    def __normalize_value_log(self, value, original_low, original_upper, normal_low, normal_upper):
+        original_length = math.log(original_upper)-math.log(original_low)
+        normal_length = normal_upper-normal_low
+        factor = normal_length/original_length
+        original_offset = math.log(value)-math.log(original_low)
+        normalized_value = (original_offset)*factor+normal_low
+        return normalized_value_log
+
+    def __denormalize_value_log(self, normalized_value, original_low, original_upper, normal_low, normal_upper):
+        # it's the inverse function of '__normalize_value_log', after applying properties of logarithms
+        original_length = math.log(original_upper)-math.log(original_low)
+        normal_length = normal_upper-normal_low
+        factor = original_length/normal_length
+        normal_offset = normalized_value-normal_low
+        value = (normal_offset)*factor+math.log(original_low)
+        return math.exp(value)
