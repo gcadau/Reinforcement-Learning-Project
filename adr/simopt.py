@@ -111,6 +111,9 @@ class SimOpt(object):
             mean = 4.5
             standard_deviation = 1
             phi.append((mean, standard_deviation))
+            mean = 4.5
+            standard_deviation = 1
+            phi.append((mean, standard_deviation))
             mean = 2.8
             standard_deviation = 1
             phi.append((mean, standard_deviation))
@@ -233,7 +236,7 @@ class SimOpt(object):
 
         #Collect 1 rollout in simulation
         env = gym.make('CustomHopper-source-v0')
-        env.set_random_parametersBySamples(samples[0], samples[1], samples[2])
+        env.set_random_parametersBySamples(samples[0], samples[1], samples[2], samples[3])
         print(env.get_parameters())
         traj_obs = []
         env.reset()
