@@ -28,10 +28,10 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         """
         self.set_parameters(*self.sample_parameters(phi))
 
-    def set_random_parametersBySamples(self, v2, v3, v4):
+    def set_random_parametersBySamples(self, v1, v2, v3, v4):
         """Set random masses
         """
-        self.set_parameters(*self.set_samples(v2, v3, v4))
+        self.set_parameters(*self.set_samples(v1, v2, v3, v4))
 
     def sample_parameters(self, phi):
         """Sample masses from a normal distribution
@@ -39,19 +39,21 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
         #distribution
         #numpy array parameters
 
-        self.sim.model.body_mass[2] = np.random.normal(phi[0][0],phi[0][1],1).astype(float) #thight
-        self.sim.model.body_mass[3] = np.random.normal(phi[1][0],phi[1][1],1).astype(float) #leg
-        self.sim.model.body_mass[4] = np.random.normal(phi[2][0],phi[2][1],1).astype(float) #foot
+        self.sim.model.body_mass[1] = np.random.normal(phi[0][0],phi[0][1],1).astype(float) #thight
+        self.sim.model.body_mass[2] = np.random.normal(phi[1][0],phi[1][1],1).astype(float) #leg
+        self.sim.model.body_mass[3] = np.random.normal(phi[2][0],phi[2][1],1).astype(float) #foot
+        self.sim.model.body_mass[4] = np.random.normal(phi[3][0],phi[3][1],1).astype(float) #thight
 
         return np.copy(self.sim.model.body_mass[1:])
 
-    def set_samples(self, v2, v3, v4):
+    def set_samples(self, v1, v2, v3, v4):
         """Sample masses according to a domain randomization distribution
         TODO
         """
         #distribution
         #numpy array parameters
 
+        self.sim.model.body_mass[1] = v1 #thight
         self.sim.model.body_mass[2] = v2 #thight
         self.sim.model.body_mass[3] = v3 #leg
         self.sim.model.body_mass[4] = v4 #foot
@@ -65,7 +67,7 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
 
     def get_parametersToBeRandomized(self):
         """Get value of mass for each link"""
-        masses = np.array( self.sim.model.body_mass[2:] )
+        masses = np.array( self.sim.model.body_mass[1:] )
         return masses
 
     def set_parameters(self, *task):
