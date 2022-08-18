@@ -183,7 +183,7 @@ class SimOpt(object):
                 try:
                     T_first_value = int(T_first.split(":")[1])
                     if (T_first_value>tau_real.shape[0]) | (T_first_value>tau_sim.shape[0]):
-                        error_msg = ' (T_first_value not compatible)'
+                        error_msg = ' (T_first value not compatible)'
                     else:
                         tau_sim = tau_sim[:T_first_value]
                         tau_real = tau_real[:T_first_value]
