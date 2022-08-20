@@ -168,7 +168,7 @@ class SimOpt(object):
             model = PPO(MlpPolicy, env)
             #model = PPO(MlpPolicy, env, verbose = 1) to print info during training
         if algorithm=='TRPO':
-            model = TRPO(MlpPolicy, env, verbose = 1)
+            model = TRPO(MlpPolicy, env)
             #model = TRPO(MlpPolicy, env, verbose = 1) to print info during training
         if model is None:
             raise NotImplementedError('Training algorithm not found')
