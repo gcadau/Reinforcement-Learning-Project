@@ -10,7 +10,6 @@ from gym import utils
 from .mujoco_env import MujocoEnv
 from scipy.stats import truncnorm
 
-#pulire: * e resto
 
 class CustomHopper(MujocoEnv, utils.EzPickle):
     def __init__(self, domain=None):
@@ -36,8 +35,6 @@ class CustomHopper(MujocoEnv, utils.EzPickle):
     def sample_parameters(self, phi):
         """Sample masses from a normal distribution
         """
-        #distribution
-        #numpy array parameters
 
         self.sim.model.body_mass[2] = np.random.normal(phi[0][0],phi[0][1],1).astype(float) #thight
         self.sim.model.body_mass[3] = np.random.normal(phi[1][0],phi[1][1],1).astype(float) #leg
