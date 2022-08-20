@@ -14,51 +14,54 @@ from sb3_contrib import TRPO
 
 class SimOpt(object):
 
-    def __init__(self):
-
+    def __init__(self, source, target):
+        self.source = source
+        self.target = target
         return
 
-    def distribution_optimization(self, training_algorithm, initPhi, normalize, logspace, budget, n_iterations, T_first):
+    def distribution_optimization(self, training_algorithm, initPhi, normalize, logspace, budget, n_iterations, T_first, phi_initial_values, phi_bounds, l_norm_space, importance_weights, norms_weights):
 
-        env_source = gym.make('CustomHopper-source-v0')
+        self.dimensions_ImportanceWeights = importance_weights
+        self.norms_weights = norms_weights
+
+        env_source = gym.make(self.source)
         self.n_paramsToBeRandomized = len(env_source.get_parametersToBeRandomized())
         env_source.close()
-        phi0 = self.__set_initialPhi(initPhi)
+        phi0 = self.__set_initialPhi(initPhi, phi_initial_values)
 
-        self.__set_phiBounds()
+        self.__set_phiBounds(phi_bounds)
         self.__set_searchSpace_bounds()
 
 
         phi = phi0
         for i in range(n_iterations):
-            env_source = gym.make('CustomHopper-source-v0')
+            env_source = gym.make(self.source)
             env_source.reset()
             model = self.__get_model(training_algorithm, env_source)
-            for i in range(100): #####
+            for i in range(100):
                 env_source.set_random_parameters(phi)
-                print(env_source.get_parameters(), 'for:' , i)
                 model.learn(total_timesteps=10000)
-            model.save("model_ppo.mdl")
+            #model.save("model.mdl")
             env_source.close()
 
             #Collect 1 rollout in real word
-            env_target = gym.make('CustomHopper-target-v0')
+            env_target = gym.make(self.target)
             traj_obs = []
             obs = env_target.reset()
             self.starting_state = obs
             traj_obs.append(obs)
-            train_reward = 0
+            cum_reward = 0
             done = False
             while not done:
                 action, _states = model.predict(obs, deterministic=True)
                 obs, reward, done, info = env_target.step(action)
                 traj_obs.append(obs)
-                train_reward += reward
-            #print(train_reward)
+                cum_reward += reward
+            #print(cum_reward)
             tau_real = np.array(traj_obs)
             env_target.close()
 
-            self.__set_length_normalized_space()
+            self.__set_length_normalized_space(l_norm_space)
             searchSpace = []
             for i in range(self.n_paramsToBeRandomized):
                 if normalize:
@@ -78,8 +81,7 @@ class SimOpt(object):
             cmaES_optimizer = ng.optimizers.CMA(parametrization=instrumentation, budget=budget)
             recommendation = cmaES_optimizer.minimize(self.__objective_function)
 
-            #get __objective_function value, recommended ## TODO: if normalize
-            #print(recommendation)
+
             rec = []
             if normalize:
                 for i in range(int(len(recommendation.value[1]['params'])/2)):
@@ -94,7 +96,8 @@ class SimOpt(object):
                     rec.append(standard_deviation)
             else:
                 rec = recommendation.value[1]['params']
-            print(rec, self.__objective_function(**recommendation.kwargs))
+            optimum =  self.__objective_function(**recommendation.kwargs)
+            #print(rec, optimum)
 
             phi_optim = rec
             phi = []
@@ -103,22 +106,30 @@ class SimOpt(object):
                 standard_deviation = phi_optim[i*2+1]
                 phi.append((mean, standard_deviation))
 
+        self.optimum = optimum
+        self.optimal_values = phi
 
 
-    def __set_initialPhi(self, initPhi):
+    def get_optimum(self):
+        return self.optimum
+
+    def get_optimal_values(self):
+        return self.optimal_values.copy()
+
+    def __set_initialPhi(self, initPhi, initial_values):
         phi = []
         if initPhi=='fixed':
-            mean = 4.5
-            standard_deviation = 1
+            mean = initial_values[0]
+            standard_deviation = initial_values[1]
             phi.append((mean, standard_deviation))
-            mean = 4.5
-            standard_deviation = 1
+            mean = initial_values[2]
+            standard_deviation = initial_values[3]
             phi.append((mean, standard_deviation))
-            mean = 2.8
-            standard_deviation = 1
+            mean = initial_values[4]
+            standard_deviation = initial_values[5]
             phi.append((mean, standard_deviation))
-            mean = 4.5
-            standard_deviation = 1
+            mean = initial_values[6]
+            standard_deviation = initial_values[7]
             phi.append((mean, standard_deviation))
         if initPhi=='random':
             for i in range(self.n_paramsToBeRandomized):
@@ -129,14 +140,14 @@ class SimOpt(object):
             raise NotImplementedError('Initialization for phi not found.')
         return phi
 
-    def __set_phiBounds(self):
+    def __set_phiBounds(self, phi_bounds):
         self.bounds = []
         for i in range(self.n_paramsToBeRandomized):
-            lower = 0.7
-            upper = 8.5
+            lower = phi_bounds[i*4]
+            upper = phi_bounds[i*4+1]
             mean = (lower, upper)
-            lower = 0.00001
-            upper = 2
+            lower = phi_bounds[i*4+2]
+            upper = phi_bounds[i*4+3]
             standard_deviation = (lower, upper)
             self.bounds.append((mean, standard_deviation))
 
@@ -147,8 +158,8 @@ class SimOpt(object):
             upper = 12
             self.searchSpace_bounds.append((lower, upper))
 
-    def __set_length_normalized_space(self):
-        self.length_normalized_space = 4
+    def __set_length_normalized_space(self, l_norm_space):
+        self.length_normalized_space = l_norm_space
 
     def __get_model(self, algorithm, env):
         model = None
@@ -186,7 +197,7 @@ class SimOpt(object):
                 try:
                     T_first_value = int(T_first.split(":")[1])
                     if (T_first_value>tau_real.shape[0]) | (T_first_value>tau_sim.shape[0]):
-                        error_msg = ' (T_first_value not compatible)'
+                        error_msg = ' (T_first value not compatible)'
                     else:
                         tau_sim = tau_sim[:T_first_value]
                         tau_real = tau_real[:T_first_value]
@@ -198,14 +209,14 @@ class SimOpt(object):
         if obj is None:
             raise NotImplementedError('T_first value not found' + error_msg)
         diff = tau_sim - tau_real
-        dimensions_ImportanceWeights = np.ones((obs_dim,))
+        dimensions_ImportanceWeights = np.array(self.dimensions_ImportanceWeights)
         diff = dimensions_ImportanceWeights*diff
         l1Norm = np.linalg.norm(diff, ord=1, axis=1)
         l2Norm = np.linalg.norm(diff, ord=2, axis=1)
         #print(l1Norm)
         #print(l2Norm)
-        l1_weight = 1
-        l2_weight = 1
+        l1_weight = self.norms_weights[0]
+        l2_weight = self.norms_weights[1]
         obj = l1_weight*np.sum(l1Norm) + l2_weight*np.sum(l2Norm)
         #print(obj)
         return obj
@@ -235,23 +246,21 @@ class SimOpt(object):
             samples.append(sample)
 
         #Collect 1 rollout in simulation
-        env = gym.make('CustomHopper-source-v0')
+        env = gym.make(self.source)
         env.set_random_parametersBySamples(samples[0], samples[1], samples[2], samples[3])
-        print(env.get_parameters())
         traj_obs = []
         env.reset()
         env.set_mujoco_state(self.starting_state)
-        obs = env.get_mujoco_current_state()
+        obs = env.get_mujoco_current_state() #'.get_mujoco_current_state()' not necessary, only to check. otherwise: obs = self.starting_state
         traj_obs.append(obs)
-        train_reward = 0
+        cum_reward = 0
         done = False
         while not done:
             action, _states = model.predict(obs, deterministic=True)
             obs, reward, done, info = env.step(action)
             traj_obs.append(obs)
-            #env.render()
-            train_reward += reward
-        #print(train_reward)
+            cum_reward += reward
+        #print(cum_reward)
         tau_sim = np.array(traj_obs)
         env.close()
 
