@@ -168,9 +168,11 @@ class SimOpt(object):
     def __get_model(self, algorithm, env):
         model = None
         if algorithm=='PPO':
-            model = PPO(MlpPolicy, env, verbose = 1)
+            model = PPO(MlpPolicy, env)
+            #model = PPO(MlpPolicy, env, verbose = 1) to print info during training
         if algorithm=='TRPO':
-            model = TRPO(MlpPolicy, env, verbose = 1)
+            model = TRPO(MlpPolicy, env)
+            #model = TRPO(MlpPolicy, env, verbose = 1) to print info during training
         if model is None:
             raise NotImplementedError('Training algorithm not found')
         return model
@@ -217,8 +219,6 @@ class SimOpt(object):
         diff = dimensions_ImportanceWeights*diff
         l1Norm = np.linalg.norm(diff, ord=1, axis=1)
         l2Norm = np.linalg.norm(diff, ord=2, axis=1)
-        #print(l1Norm)
-        #print(l2Norm)
         l1_weight = self.norms_weights[0]
         l2_weight = self.norms_weights[1]
         obj = l1_weight*np.sum(l1Norm) + l2_weight*np.sum(l2Norm)
