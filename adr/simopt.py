@@ -27,9 +27,9 @@ class SimOpt(object):
         env_source = gym.make(self.source)
         self.n_paramsToBeRandomized = len(env_source.get_parametersToBeRandomized())
         env_source.close()
-        phi0 = self.__set_initialPhi(initPhi, phi_initial_values)
 
         self.__set_phiBounds(phi_bounds)
+        phi0 = self.__set_initialPhi(initPhi, phi_initial_values)
         self.__set_searchSpace_bounds()
 
 
@@ -133,8 +133,12 @@ class SimOpt(object):
             phi.append((mean, standard_deviation))
         if initPhi=='random':
             for i in range(self.n_paramsToBeRandomized):
-                #mean =
-                #standard_deviation =
+                mean = np.random.rand()*(self.bounds[i][0][1]-self.bounds[i][0][0])
+                while (mean<=self.bounds[i][0][0]+(self.bounds[i][0][1]-self.bounds[i][0][0])/3) | (mean>=self.bounds[i][0][1]-(self.bounds[i][0][1]-self.bounds[i][0][0])/3): #if values are to close to bounds, resample
+                    mean = np.random.rand()*(self.bounds[i][0][1]-self.bounds[i][0][0])
+                standard_deviation = np.random.rand()*(self.bounds[i][1][1]-self.bounds[i][1][0])
+                while (standard_deviation<=self.bounds[i][1][0]+(self.bounds[i][1][1]-self.bounds[i][1][0])/3) | (standard_deviation>=self.bounds[i][1][1]-(self.bounds[i][1][1]-self.bounds[i][1][0])/3): #if values are to close to bounds, resample
+                    standard_deviation = np.random.rand()*(self.bounds[i][1][1]-self.bounds[i][1][0])
                 phi.append((mean, standard_deviation))
         if len(phi)==0:
             raise NotImplementedError('Initialization for phi not found.')
