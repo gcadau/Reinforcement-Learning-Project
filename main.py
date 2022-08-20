@@ -41,7 +41,7 @@ def main():
     args = parse_args()
     filePath = args.algorithm_parameters_filePath
     if filePath is None: #default values
-        phi_initial_values = [4.5, 1, 2.8, 1, 4.5, 1]
+        phi_initial_values = [4.5, 1, 4.5, 1, 2.8, 1, 4.5, 1]
         phi_bounds = [0.7, 8.5, 0.00001, 2, 0.7, 8.5, 0.00001, 2, 0.7, 8.5, 0.00001, 2, 0.7, 8.5, 0.00001, 2]
         length_normalized_space = 4
         importance_weights = 11*[float(1)]
@@ -52,7 +52,7 @@ def main():
             try:
                 phi_initial_values = [float(i) for i in params['phi initial values'].split(" ")]
             except KeyError:
-                phi_initial_values = [4.5, 1, 2.8, 1, 4.5, 1] #default values
+                phi_initial_values = [4.5, 1, 4.5, 1, 2.8, 1, 4.5, 1] #default values
             try:
                 phi_bounds = [float(i) for i in params['phi bounds'].split(" ")]
             except KeyError:
