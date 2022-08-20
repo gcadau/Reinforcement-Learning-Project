@@ -1,1 +1,5 @@
-
+phi initial values:4.5 1 2.8 1 4.5 1
+phi bounds:0.7 8.5 0.00001 2 0.7 8.5 0.00001 2 0.7 8.5 0.00001 2
+length normalized space:4
+importance weights:1 1 1 1 1 1 1 1 1 1 1
+norms weights:1 1
