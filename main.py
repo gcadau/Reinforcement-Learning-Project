@@ -20,7 +20,7 @@ def parse_args():
     parser.add_argument('--budget', default=1000, type=int, help='Number of evaluations in the optimization problem (i.e.: number of samples from the distribution)')
     parser.add_argument('--n_iterations', default=1, type=int, help='Number of iterations in SimOpt algorithm')
     parser.add_argument('--T_first', default='max', type=str, help='T-first value in discrepancy function [max, min, fixed:<number>]')
-    parser.add_argument('--algorithm_parameters_filePath', default=None, type_str, help='Path of the file with the values ​​of the algorithm parameters')
+    parser.add_argument('--algorithm_parameters_filePath', default=None, type=str, help='Path of the file with the values ​​of the algorithm parameters')
     parser.add_argument('--episodes', default=50, type=int, help='Number of test episodes')
     parser.add_argument('--render', default=False, action='store_true', help='Render the simulator')
 
