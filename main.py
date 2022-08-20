@@ -29,9 +29,11 @@ def parse_args():
 def get_model(algorithm, env):
     model = None
     if algorithm=='PPO':
-        model = PPO(MlpPolicy, env, verbose = 1)
+        model = PPO(MlpPolicy, env)
+        #model = PPO(MlpPolicy, env, verbose = 1) to print info during training
     if algorithm=='TRPO':
-        model = TRPO(MlpPolicy, env, verbose = 1)
+        model = TRPO(MlpPolicy, env)
+        #model = TRPO(MlpPolicy, env, verbose = 1) to print info during training
     if model is None:
         raise NotImplementedError('Training algorithm not found')
     return model
