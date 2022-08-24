@@ -112,7 +112,7 @@ def main():
             if args.render:
                 env_target.render()
             cum_reward += reward
-            print(f"Episode: {episode} | Return: {cum_reward}")
+        print(f"Episode: {episode} | Return: {cum_reward}")
     env_target.close()
 
 
