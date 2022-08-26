@@ -61,12 +61,15 @@ class Policy(torch.nn.Module):
 
 
 class Agent(object):
-    def __init__(self, policy, device='cpu'):
+    def __init__(self, policy, device='cpu', gamma=0.99, learning_rate=1e-3, opt='adam'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
-        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
+        if opt=='adam':
+            self.optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
+        if opt=='sgd':
+            self.optimizer = torch.optim.SGD(policy.parameters(), lr=learning_rate)
 
-        self.gamma = 0.99
+        self.gamma = gamma
         self.states = []
         self.next_states = []
         self.action_log_probs = []

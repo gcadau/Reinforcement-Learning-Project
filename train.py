@@ -12,14 +12,14 @@ from agent import Agent, Policy
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--n-episodes', default=100000, type=int, help='Number of training episodes')
-    parser.add_argument('--print-every', default=1, type=int, help='Print info every <> episodes') #changed
+    parser.add_argument('--print-every', default=100000, type=int, help='Print info every <> episodes') #changed
     parser.add_argument('--device', default='cpu', type=str, help='network device [cpu, cuda]')
 
     return parser.parse_args()
 
 args = parse_args()
 
-def main():
+def train(gamma, lr, optimizer):
 
     env = gym.make('CustomHopper-source-v0')
     # env = gym.make('CustomHopper-target-v0')
@@ -36,7 +36,7 @@ def main():
     action_space_dim = env.action_space.shape[-1]
 
     policy = Policy(observation_space_dim, action_space_dim)
-    agent = Agent(policy, device=args.device)
+    agent = Agent(policy, device=args.device, gamma=gamma, learning_rate=lr, opt=optimizer)
 
 
     for episode in range(args.n_episodes):
@@ -64,9 +64,17 @@ def main():
             print('Episode return:', train_reward)
 
 
+    model = f"model_{gamma}_{lr}_{optimizer}.mdl"
+    torch.save(agent.policy.state_dict(), model)
 
-    torch.save(agent.policy.state_dict(), "model.mdl")
-
+def main():
+    gamma = [0.6, 0.9, 0.99, 0.999]
+    opt = ['adam', 'sgd']
+    lr = [1e-3, 1e-2, 0.6]
+    for g in gamma:
+        for o in opt:
+            for l in lr:
+                train(g, l, o)
 
 
 if __name__ == '__main__':
