@@ -46,7 +46,7 @@ def train(gamma, lr, optimizer):
 
         while not done:  # Loop until the episode is over
 
-            action, action_probabilities = agent.get_action(state)
+            action, action_probabilities, state_value = agent.get_action(state)
             previous_state = state
 
             state, reward, done, info = env.step(action.detach().cpu().numpy())
