@@ -1,5 +1,4 @@
 import torch
-import torch.nn
 import torch.nn.functional as F
 from torch.distributions import Normal
 import numpy as np
@@ -66,12 +65,15 @@ class Policy(torch.nn.Module):
 
 
 class Agent(object):
-    def __init__(self, policy, device='cpu'):
+    def __init__(self, policy, device='cpu', gamma=0.99, learning_rate=1e-3, opt='adam'):
         self.train_device = device
         self.policy = policy.to(self.train_device)
-        self.optimizer = torch.optim.Adam(policy.parameters(), lr=1e-3)
+        if opt=='adam':
+            self.optimizer = torch.optim.Adam(policy.parameters(), lr=learning_rate)
+        if opt=='sgd':
+            self.optimizer = torch.optim.SGD(policy.parameters(), lr=learning_rate)
 
-        self.gamma = 0.99
+        self.gamma = gamma
         self.states = []
         self.next_states = []
         self.state_values = []
@@ -87,16 +89,16 @@ class Agent(object):
         rewards = torch.stack(self.rewards, dim=0).to(self.train_device).squeeze(-1)
         done = torch.Tensor(self.done).to(self.train_device)
 
-        state_values_det = state_values.detach()
         G=[]                         
         for r in range(0, len(rewards)):
             if r != (len(rewards)-1):
-                G.append(rewards[r] + self.gamma * state_values_det[r+1])
+                G.append(rewards[r] + self.gamma * state_values[r+1])
             else:
                 G.append(rewards[r])
         G = torch.Tensor(G).to(self.train_device) # boostrapped discounted return estimates
-        advantage = G - state_values_det # advantage terms
-        actor_loss = torch.sum(-action_log_probs * advantage) # actor loss function
+        advantage = G - state_values # advantage terms
+        advantage_det = advantage.detach()
+        actor_loss = torch.sum(-action_log_probs * advantage_det) # actor loss function
         
         G_det = G.detach()
         critic_loss_fn = torch.nn.HuberLoss()
