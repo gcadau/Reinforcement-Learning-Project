@@ -51,7 +51,7 @@ def train(gamma, lr, optimizer):
 
             state, reward, done, info = env.step(action.detach().cpu().numpy())
 
-            agent.store_outcome(previous_state, state, action_probabilities, reward, done)
+            agent.store_outcome(previous_state, state, state_value, action_probabilities, reward, done)
 
             train_reward += reward
 
