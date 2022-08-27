@@ -74,7 +74,10 @@ def main():
     for g in gamma:
         for o in opt:
             for l in lr:
-                train(g, l, o)
+                try:
+                    train(g, l, o)
+                except ValueError:
+                    print("Uncompatible configuration.")
 
 
 if __name__ == '__main__':
