@@ -13,7 +13,17 @@ from stable_baselines3.ppo.policies import MlpPolicy
 from sb3_contrib import TRPO
 
 class SimOpt(object):
-
+    """
+    Available methods.
+    
+    distribution_optimization(). It finds an optimal distribution of parameters of interest.
+    
+    get_optimum(). Getter method, to be called after 'distribution_optimization()'. It returns the optimal value of the objective function.
+    
+    get_optimal_values(). Getter method, to be called after 'distribution_optimization()'. It returns the optimal
+    
+    
+    """
     def __init__(self, source, target):
         self.source = source
         self.target = target
