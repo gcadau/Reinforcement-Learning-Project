@@ -76,7 +76,7 @@ class SimOpt(object):
             importance weights for each dimension in the discrepancy function as in our paper. Each element in the list corresponds to a single dimension of the observation space. 
         
         norms_weights: list(int),
-            weights for each norm in the discrepancy function as in our paper. The first element of the list corresponds to the 1-norm of the observation vector, the second elemen corresponds to the 2-norm.
+            weights for each norm in the discrepancy function as in our paper. The first element of the list corresponds to the 1-norm of the observation vector, the second element corresponds to the 2-norm.
         """
         
         self.dimensions_ImportanceWeights = importance_weights
