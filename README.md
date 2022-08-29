@@ -14,7 +14,7 @@
     <T_first>: T-first value in discrepancy function [max, min, fixed:<number>], default='max'
     <filePath>: path of the file with the values of the algorithm parameters, default=None
     <episodes>: number of test episodes, default=50
-    --render': render the simulator, default=False
+    --render: render the simulator, default=False
         If the path of the file is not passed as an argument, the defaults parameters values are considered.
     Format of the file.
     <parameter name>:<parameters values separated by a single space>\n
