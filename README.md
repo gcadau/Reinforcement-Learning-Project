@@ -4,7 +4,7 @@
     To launch it:
     python3 main.py --device <device> --training_algorithm <training_algorithm> --initialPhi <initialPhi> --normalize --logspace --budget <budget> --n_iterations <n_iterations> --T_first <T_first> ----algorithm_parameters_filePath <filePath> --episodes <episodes> --render
     Possible arguments.
-    <device>: network device [cpu, cuda], default='cpu'
+    <device>: device [cpu, cuda], default='cpu'
     <training_algorithm>: training algorithm [PPO, TRPO], default='PPO'
     <initialPhi>: initial values for phi [fixed, random], default='fixed'
     --normalize: normalize dynamics parameters search space to [0,n] (n depends on the implementation), default=False
