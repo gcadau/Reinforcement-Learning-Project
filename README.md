@@ -9,7 +9,7 @@
     <initialPhi>: initial values for phi [fixed, random], default='fixed'
     --normalize: normalize dynamics parameters search space to [0,n] (n depends on the implementation), default=False
     --logspace: use a log space for variances (makes senses only if 'normalize' is set to True), default=False
-    <budget>: Number of evaluations in the optimization problem (i.e.: number of samples from the distribution), default=1000
+    <budget>: number of evaluations in the optimization problem (i.e.: number of samples from the distribution), default=1000
     <n_iterations>: number of iterations in SimOpt algorithm, default=1
     <T_first>: T-first value in discrepancy function [max, min, fixed:<number>], default='max'
     <filePath>: path of the file with the values of the algorithm parameters, default=None
