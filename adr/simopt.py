@@ -92,7 +92,7 @@ class SimOpt(object):
 
 
         phi = phi0
-        for i in range(n_iterations):
+        for j in range(n_iterations):
             env_source = gym.make(self.source)
             env_source.reset()
             model = self.__get_model(training_algorithm, env_source)
