@@ -3,8 +3,19 @@
     
     To launch it:
     python3 main.py --device <device> --training_algorithm <training_algorithm> --initialPhi <initialPhi> --normalize --logspace --budget <budget> --n_iterations <n_iterations> --T_first <T_first> ----algorithm_parameters_filePath <filePath> --episodes <episodes> --render
-
-    -- If the path of the file is not passed as an argument, the defaults parameters values are considered.
+    Possible arguments.
+    <device>: network device [cpu, cuda], default='cpu'
+    <training_algorithm>: training algorithm [PPO, TRPO], default='PPO'
+    <initialPhi>: initial values for phi [fixed, random], default='fixed'
+    --normalize: normalize dynamics parameters search space to [0,n] (n depends on the implementation), default=False
+    --logspace: use a log space for variances (makes senses only if 'normalize' is set to True), default=False
+    <budget>: Number of evaluations in the optimization problem (i.e.: number of samples from the distribution), default=1000
+    <n_iterations>: number of iterations in SimOpt algorithm, default=1
+    <T_first>: T-first value in discrepancy function [max, min, fixed:<number>], default='max'
+    <filePath>: path of the file with the values of the algorithm parameters, default=None
+    <episodes>: number of test episodes, default=50
+    --render': render the simulator, default=False
+        If the path of the file is not passed as an argument, the defaults parameters values are considered.
     Format of the file.
     <parameter name>:<parameters values separated by a single space>\n
     ...
