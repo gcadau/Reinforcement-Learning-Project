@@ -13,13 +13,71 @@ from stable_baselines3.ppo.policies import MlpPolicy
 from sb3_contrib import TRPO
 
 class SimOpt(object):
-
+    """
+    Available methods.
+    
+    distribution_optimization(). It finds an optimal distribution of parameters of interest.
+    
+    get_optimum(). Getter method, to be called after 'distribution_optimization()'. It returns the optimal value of the objective function.
+    
+    get_optimal_values(). Getter method, to be called after 'distribution_optimization()'. It returns the optimal distribution for each parameter of interest in the form list(Tuple(<mean>, <variance>)). 
+    """
+    
     def __init__(self, source, target):
+        """
+        Parameters.
+        
+        source: string,
+            source environment name to be passed to gym simulated environment object.
+            
+        target: string,
+            target environment name to be passed to gym simulated environment object.
+        """
+        
         self.source = source
         self.target = target
         return
 
     def distribution_optimization(self, training_algorithm, initPhi, normalize, logspace, budget, n_iterations, T_first, phi_initial_values, phi_bounds, l_norm_space, importance_weights, norms_weights):
+        """
+        Parameters.
+        
+        training_algorithm: string,
+            policy gradient algorithm used to train the agent from stable_baselines3 or sb3_contrib libraries. Possible choices: ['PPO', 'TRPO'].
+            
+        initPhi: string,
+            intitialization method for the distribution parameter phi. Possible choices: ['fixed', 'random'].
+            
+        normalize: boolean,
+            normalize phi in the space [0, n].
+            
+        logspace: boolean,
+            normalize variances belonging to phi in a logarithmic space. It makes senses only if 'normalize' is set to True.
+            
+        budget: int,
+            number evaluations of the objective function performed by the optimizer (i.e. number of samples from the distribution).
+            
+        n_iterations: int,
+            number of iterations of the optimization algorithm.
+            
+        T_first: string,
+            T-first value in discrepancy function as in our paper. Possible choice: ['max', 'min', 'fixed:<number>'].
+            
+        phi_initial_values: list(int),
+            initial values for the distribution parameter phi in the first iteration of the algorithm.
+            
+        phi_bounds: list(int),
+            bounds values for the distribution parameter phi.
+            
+        l_norm_space: int,
+            length of the normalized space if 'normalize' is set to True.
+            
+        importance_weights: list(int),
+            importance weights for each dimension in the discrepancy function as in our paper. Each element in the list corresponds to a single dimension of the observation space. 
+        
+        norms_weights: list(int),
+            weights for each norm in the discrepancy function as in our paper. The first element of the list corresponds to the 1-norm of the observation vector, the second element corresponds to the 2-norm.
+        """
 
         self.dimensions_ImportanceWeights = importance_weights
         self.norms_weights = norms_weights
